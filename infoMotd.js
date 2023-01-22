@@ -1,4 +1,4 @@
-ll.registerPlugin("infoMotd","在motd上显示各种实时信息",[0,4,1])
+ll.registerPlugin("infoMotd","在motd上显示各种实时信息",[0,5,0])
 const contents = new JsonConfigFile("plugins\\infoMotd\\contents.json");
 const conf = new JsonConfigFile("plugins\\infoMotd\\config.json");
 /*try{
@@ -32,14 +32,198 @@ contents.init("motd",[
 conf.init("frequency",5000);
 let i;
 let timecolor="f";
+let tpstype=null;
+class tps{
+	constructor(){
+		const availabletpsplugins=["QueryTPS","BEPlaceholderAPI"];
+		for(i=0;i<availabletpsplugins.length;i++){
+			if(ll.listPlugins().includes(availabletpsplugins[i])){
+				this.type=availabletpsplugins[i];
+				break;
+			}
+		}
+	}
+	currentTps(){
+		let tpsfunc;
+		switch(this.type){
+			case "QueryTPS": {
+				tpsfunc=ll.import("QueryTPS", "GetCurrentTPS");
+				return tpsfunc();
+			}
+			case "BEPlaceholderAPI": {
+				tpsfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return tpsfunc.getValue("server_tps");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	averageTps(){
+		let tpsfunc;
+		switch(this.type){
+			case "QueryTPS": {
+				tpsfunc=ll.import("QueryTPS", "GetAverageTPS");
+				return tpsfunc();
+			}
+			case "BEPlaceholderAPI": {
+				tpsfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return tpsfunc.getValue("server_tps");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	plugin(){
+		return this.type;
+	}
+}
+class mspt{
+	constructor(){
+		const availableplugins=["BEPlaceholderAPI"];
+		for(i=0;i<availableplugins.length;i++){
+			if(ll.listPlugins().includes(availableplugins[i])){
+				this.type=availableplugins[i];
+				break;
+			}
+		}
+	}
+	get(){
+		let msptfunc;
+		switch(this.type){
+			case "BEPlaceholderAPI": {
+				msptfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return msptfunc.getValue("server_mspt");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	plugin(){
+		return this.type;
+	}
+}
+class version{
+	constructor(){
+		const availableplugins=["BEPlaceholderAPI"];
+		for(i=0;i<availableplugins.length;i++){
+			if(ll.listPlugins().includes(availableplugins[i])){
+				this.type=availableplugins[i];
+				break;
+			}
+		}
+	}
+	get(){
+		let getfunc;
+		switch(this.type){
+			case "BEPlaceholderAPI": {
+				getfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return getfunc.getValue("server_version");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	plugin(){
+		return this.type;
+	}
+}
+class protocol{
+	constructor(){
+		const availableplugins=["BEPlaceholderAPI"];
+		for(i=0;i<availableplugins.length;i++){
+			if(ll.listPlugins().includes(availableplugins[i])){
+				this.type=availableplugins[i];
+				break;
+			}
+		}
+	}
+	get(){
+		let getfunc;
+		switch(this.type){
+			case "BEPlaceholderAPI": {
+				getfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return getfunc.getValue("server_protocol_version");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	plugin(){
+		return this.type;
+	}
+}
+class entities{
+	constructor(){
+		const availableplugins=["BEPlaceholderAPI"];
+		for(i=0;i<availableplugins.length;i++){
+			if(ll.listPlugins().includes(availableplugins[i])){
+				this.type=availableplugins[i];
+				break;
+			}
+		}
+	}
+	get(){
+		let getfunc;
+		switch(this.type){
+			case "BEPlaceholderAPI": {
+				getfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return getfunc.getValue("server_totol_entities");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	plugin(){
+		return this.type;
+	}
+}
+class uptime{
+	constructor(){
+		const availableplugins=["BEPlaceholderAPI"];
+		for(i=0;i<availableplugins.length;i++){
+			if(ll.listPlugins().includes(availableplugins[i])){
+				this.type=availableplugins[i];
+				break;
+			}
+		}
+	}
+	get(){
+		let getfunc;
+		switch(this.type){
+			case "BEPlaceholderAPI": {
+				getfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
+				return getfunc.getValue("server_uptime");
+			}
+			default:{
+				return null;
+			}
+		}
+	}
+	plugin(){
+		return this.type;
+	}
+}
 mc.listen("onServerStarted", () => {
-	playmotds();
+
+	main();
     /*PAPI.registerServerPlaceholder(phapimspt,"BEPlaceholderAPI_JS","server_mspt")
 	PAPI.registerServerPlaceholder(phapimspt,"BEPlaceholderAPI_JS","server_tps")
 	PAPI.registerServerPlaceholder(phapimspt,"BEPlaceholderAPI_JS","server_world_name")*/
 	//log(PAPI.getValue("server_protocol_version"));
 	//log(PAPI.translateString("%server_tps%",mc.getOnlinePlayers()[0]));
 })
+function main(){
+	//let motdtps=new tps(tpstype);
+	//log(motdtps.currentTps())
+	//log(new tps().plugin());
+	playmotds();
+}
 function playmotds(){
 	let order = 0;
 	let motd="";
@@ -77,7 +261,51 @@ function playmotds(){
 	
 }
 function replace(str){
-	return str.replace(/\$gametime/g,gametimestr()).replace(/\$weather/g,weatherstr())+"§r";
+	let replaced="";
+	replaced=str.replace(/\$gametime/g,gametimestr()).replace(/\$weather/g,weatherstr())+"§r";
+	if(new tps().type!=null){
+		replaced=replaced.replace(/\$currenttps/g,new tps().currentTps());
+	}
+	else{
+		replaced=replaced.replace(/\$currenttps/g,"");
+	}
+	if(new tps().type!=null){
+		replaced=replaced.replace(/\$averagetps/g,new tps().averageTps());
+	}
+	else{
+		replaced=replaced.replace(/\$averagetps/g,"");
+	}
+	if(new mspt().type!=null){
+		replaced=replaced.replace(/\$mspt/g,new mspt().get());
+	}
+	else{
+		replaced=replaced.replace(/\$mspt/g,"");
+	}
+	if(new version().type!=null){
+		replaced=replaced.replace(/\$version/g,new version().get());
+	}
+	else{
+		replaced=replaced.replace(/\$version/g,"");
+	}
+	if(new protocol().type!=null){
+		replaced=replaced.replace(/\$protocol/g,new protocol().get());
+	}
+	else{
+		replaced=replaced.replace(/\$protocol/g,"");
+	}
+	if(new entities().type!=null){
+		replaced=replaced.replace(/\$entities/g,new entities().get());
+	}
+	else{
+		replaced=replaced.replace(/\$entities/g,"");
+	}
+	if(new uptime().type!=null){
+		replaced=replaced.replace(/\$uptime/g,new uptime().get());
+	}
+	else{
+		replaced=replaced.replace(/\$uptime/g,"");
+	}
+	return replaced;
 }
 function cleanstr(arr){
 	let arr1 = [];
@@ -148,7 +376,7 @@ function joinconnect(arr){
 	});
 	return str;
 }
-function phapimspt(object){
+function papimspt(object){
     for (let key in object){
         if(key == "<1>"){
         return obj[key] + mc.getBDSVersion()
