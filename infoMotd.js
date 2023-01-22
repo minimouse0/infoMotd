@@ -172,7 +172,7 @@ class entities{
 		switch(this.type){
 			case "BEPlaceholderAPI": {
 				getfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
-				return getfunc.getValue("server_totol_entities");
+				return getfunc.getValue("server_total_entities");
 			}
 			default:{
 				return null;
