@@ -1,29 +1,45 @@
-ll.registerPlugin("infoMotd","在motd上显示各种实时信息",[0,4,0])
+ll.registerPlugin("infoMotd","在motd上显示各种实时信息",[0,4,1])
 const contents = new JsonConfigFile("plugins\\infoMotd\\contents.json");
 const conf = new JsonConfigFile("plugins\\infoMotd\\config.json");
+/*try{
+	const PAPI = require('./lib/BEPlaceholderAPI-JS').PAPI;
+	log(PAPI);
+}catch(err){
+	log("未安装BEPlaceholderAPI，将禁用部分扩展功能。");
+}*/
+//const PAPI = require('./lib/BEPlaceholderAPI-JS').PAPI;
+
 contents.init("motd",[
 	{
 		type:"static",
-		contents:"静态"
+		contents:"§l§b静态"
 	},
 	{
 		type:"alt",
 		contents:[
-			"轮播1",
-			"轮播2",
-			"轮播3"
+			"§r§c轮播1",
+			"§r§d轮播2",
+			"§r§e$weather3"
 		],
 		random:false
 	},
 	{
 		type:"roll",
-		contents:"滚动部分",
+		contents:"§r§l滚动§r§4部分",
 		length:2
 	}
 ]);
 conf.init("frequency",5000);
 let i;
 let timecolor="f";
+mc.listen("onServerStarted", () => {
+	playmotds();
+    /*PAPI.registerServerPlaceholder(phapimspt,"BEPlaceholderAPI_JS","server_mspt")
+	PAPI.registerServerPlaceholder(phapimspt,"BEPlaceholderAPI_JS","server_tps")
+	PAPI.registerServerPlaceholder(phapimspt,"BEPlaceholderAPI_JS","server_world_name")*/
+	//log(PAPI.getValue("server_protocol_version"));
+	//log(PAPI.translateString("%server_tps%",mc.getOnlinePlayers()[0]));
+})
 function playmotds(){
 	let order = 0;
 	let motd="";
@@ -132,6 +148,15 @@ function joinconnect(arr){
 	});
 	return str;
 }
+function phapimspt(object){
+    for (let key in object){
+        if(key == "<1>"){
+        return obj[key] + mc.getBDSVersion()
+        }
+    }
+    return "Fail";
+}
+
 function colorrollslice(currentValue,order){
 	let i;
 	let motd = "";
@@ -186,6 +211,5 @@ function colorrollslice(currentValue,order){
 	motd=motd+"§r";
 	return motd;
 }
-mc.listen("onServerStarted",playmotds)
 ll.export(weather,"231Lmotd","weather")
 ll.export(gametime,"231Lmotd","time")
