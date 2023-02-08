@@ -1,4 +1,5 @@
-ll.registerPlugin("infoMotd","在motd上显示各种实时信息",[0,5,0])
+const llversion = ll.requireVersion(2,9,2)?[0,5,3,Version.Beta]:[0,5,3]
+ll.registerPlugin("infoMotd","在motd上显示各种实时信息",llversion,{Author:"小鼠同学"});
 const contents = new JsonConfigFile("plugins\\infoMotd\\contents.json");
 const conf = new JsonConfigFile("plugins\\infoMotd\\config.json");
 /*try{
@@ -35,7 +36,8 @@ let timecolor="f";
 let tpstype=null;
 class tps{
 	constructor(){
-		const availabletpsplugins=["QueryTPS","BEPlaceholderAPI"];
+		let i = 0;
+		const availabletpsplugins=["QueryTPS","BEPlaceholderAPI","Cleaner"];
 		for(i=0;i<availabletpsplugins.length;i++){
 			if(ll.listPlugins().includes(availabletpsplugins[i])){
 				this.type=availabletpsplugins[i];
@@ -54,6 +56,10 @@ class tps{
 				tpsfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
 				return tpsfunc.getValue("server_tps");
 			}
+			case "Cleaner": {
+				tpsfunc=ll.import("Cleaner", "GetCurrentTPS");
+				return tpsfunc();
+			}
 			default:{
 				return null;
 			}
@@ -69,6 +75,10 @@ class tps{
 			case "BEPlaceholderAPI": {
 				tpsfunc=require('./lib/BEPlaceholderAPI-JS').PAPI;
 				return tpsfunc.getValue("server_tps");
+			}
+			case "Cleaner": {
+				tpsfunc=ll.import("Cleaner", "GetAverageTPS");
+				return tpsfunc();
 			}
 			default:{
 				return null;
@@ -123,7 +133,7 @@ class version{
 				return getfunc.getValue("server_version");
 			}
 			default:{
-				return null;
+				return mc.BDSVersion();
 			}
 		}
 	}
@@ -149,7 +159,7 @@ class protocol{
 				return getfunc.getValue("server_protocol_version");
 			}
 			default:{
-				return null;
+				return mc.getServerProtocolVersion();
 			}
 		}
 	}
@@ -398,7 +408,7 @@ function colorrollslice(currentValue,order){
 	bcut=fcut+currentValue.length;//这里的两个currentValue是配置文件的长度！
 	//log(joinconnect(rollarr).slice(fcut,bcut));
 	forlength=0;
-	for(i=0;i<rollarr.length;i++){
+	for(i=0;i<rollarr.length;i++){//找到前切点所在的字符串和该相对字符串的切点位置
 		forlength+=rollarr[i].length;
 		if(forlength>fcut){
 			fcutarr=i;
@@ -407,7 +417,7 @@ function colorrollslice(currentValue,order){
 		}						
 	}
 	forlength=0;
-	for(i=0;i<rollarr.length;i++){
+	for(i=0;i<rollarr.length;i++){//找到后切点所在的字符串和相对该字符串的切点位置
 		forlength+=rollarr[i].length;
 		if(forlength>=bcut){
 			bcutarr=i;
@@ -429,15 +439,45 @@ function colorrollslice(currentValue,order){
 	//log(color);
 	//log(rollarr[fcutarr].slice(fcutonstr));
 	//log(rollarr[bcutarr].slice(0,bcutonstr))
-	motd = motd + color[fcutarr] + rollarr[fcutarr].slice(fcutonstr);
-	for(i=fcutarr+1;i<=bcutarr-1;i++){
-		motd = motd + color[i] + rollarr[i];
-	}
 	if(fcutarr!=bcutarr){
-		motd = motd + color[bcutarr] + rollarr[bcutarr].slice(0,bcutonstr);
+		motd = motd + color[fcutarr] + rollarr[fcutarr].slice(fcutonstr);
+		for(i=fcutarr+1;i<=bcutarr-1;i++){
+			motd = motd + color[i] + rollarr[i];
+		}
+		if(fcutarr!=bcutarr){
+			motd = motd + color[bcutarr] + rollarr[bcutarr].slice(0,bcutonstr);//issue#1问题就出在这了，如果前后切点位于同一字符串，那么就会直接读取开头字符串的值，不对后字符串作处理，那么后字串的处理就不会进行，于是就会看到第一个字符串直接到头
+		}		
 	}
+	else{
+		motd = motd + color[fcutarr] + rollarr[fcutarr].slice(fcutonstr,bcutonstr)
+	}
+
+	/*else{//这个就是前后切点位于同一字符串的情况，所以直接对motd字符串本身处理，而尽量不再去读取之前的变量
+		motd = motd.slice(0,bcutonstr);
+	}*/
 	motd=motd+"§r";
 	return motd;
 }
-ll.export(weather,"231Lmotd","weather")
-ll.export(gametime,"231Lmotd","time")
+ll.export(weather,"infoMotd","weather")
+ll.export(gametime,"infoMotd","time")
+let mgrcmd = mc.newCommand("infomotd", " ", PermType.Console);
+mgrcmd.setEnum("options",["reload"]);
+mgrcmd.mandatory("options",ParamType.Enum, "options");
+mgrcmd.overload(["options"]);
+mgrcmd.setCallback((cmd,origin,output,results)=>{
+	if(results.options=="reload"){
+		if(contents.reload()){
+			log("motd内容重载完成")
+		}
+		else{
+			log("无法重载motd内容");
+		}
+		if(conf.reload){
+			log("配置文件重载完成");
+		}
+		else{
+			log("无法重载配置文件");
+		}
+	}
+})
+mgrcmd.setup();
